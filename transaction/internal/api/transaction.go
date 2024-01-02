@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"microservice-pb/internal/broker"
-	"microservice-pb/internal/domain"
 	"net/http"
+	"transaction/internal/broker"
+	"transaction/internal/domain"
 )
 
 type transactionApi struct {

@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"transaction/internal/api"
-	"transaction/internal/broker"
-	"transaction/internal/config"
-	"transaction/internal/domain"
+	"transfer/internal/api"
+	"transfer/internal/broker"
+	"transfer/internal/config"
+	"transfer/internal/domain"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -22,17 +22,17 @@ func main() {
 
 	//setup database ORM sqlite DB
 	// REF: https://gorm.io/docs/
-	db, err := gorm.Open(sqlite.Open("transactions.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("transfers.db"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
 	// // Schema migration
-	db.AutoMigrate(&domain.Transaction{})
+	db.AutoMigrate(&domain.Transfer{})
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: "update_transaction", NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: "create_transfer", NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
 	}
 
 	// create client
@@ -49,18 +49,14 @@ func main() {
 
 	// // setting up repo for the controller to access db
 	repo := domain.NewRepo(db)
-	controller := api.NewTransaction(repo, client)
+	controller := api.NewTransfer(repo, client)
 
 	// http REF: https://pkg.go.dev/net/http
 	mux := http.NewServeMux()
-	mux.HandleFunc("/transaction", func(w http.ResponseWriter, r *http.Request) {
-		// update transactions
+	mux.HandleFunc("/transfer", func(w http.ResponseWriter, r *http.Request) {
+		// update transfer
 		if r.Method == http.MethodPost {
-			controller.Update(w, r)
-		}
-		// get transactions
-		if r.Method == http.MethodGet {
-			controller.Get(w, r)
+			controller.Create(w, r)
 		}
 	})
 
@@ -74,7 +70,7 @@ func main() {
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, []string{"create_transaction", "update_transaction"})
+	go broker.Subscribe(client, []string{"update_transaction"})
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())
