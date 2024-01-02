@@ -15,11 +15,10 @@ var (
 // Transaction model
 type Transaction struct {
 	gorm.Model
-	ID        int64
-	Amount    float64
-	Account   int64
-	Ref       int64
-	Status    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Amount    float64   `json:"amount"`
+	Account   int64     `json:"account"`
+	Ref       int64     `json:"ref"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

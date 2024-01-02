@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"log"
+	"microservice-pb/internal/api"
+	"microservice-pb/internal/broker"
 	"microservice-pb/internal/config"
 	"microservice-pb/internal/domain"
-	"microservice-pb/internal/transport"
 	"net/http"
-	"os"
 	"time"
 
 	"gorm.io/driver/sqlite"
@@ -21,48 +20,51 @@ func main() {
 		panic(err)
 	}
 
-	//setup database ORM
+	//setup database ORM sqlite DB
 	// REF: https://gorm.io/docs/
 	db, err := gorm.Open(sqlite.Open("transactions.db"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	// Schema migration
+	// // Schema migration
 	db.AutoMigrate(&domain.Transaction{})
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
-	topics := []transport.Topic{
-		{Topic: "high", NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: "medium", NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: "low", NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
+	topics := []broker.Topic{
+		{Topic: "update_transaction", NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
 	}
 
 	// create client
-	client, err := transport.NewKafkaClient(config.KAFKA_SERVER, config.KAFKA_CONSUMER_GROUP, topics)
+	client, err := broker.NewKafkaClient(config.KAFKA_SERVER, config.KAFKA_CONSUMER_GROUP, topics)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	// create topic
-	err = transport.NewKafkaAdminClientCreateTopic(client)
+	// // create topics
+	err = broker.NewKafkaAdminClientCreateTopic(client)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+
+	// // setting up repo for the controller to access db
+	repo := domain.NewRepo(db)
+	controller := api.NewTransaction(repo, client)
 
 	// http REF: https://pkg.go.dev/net/http
 	mux := http.NewServeMux()
 	mux.HandleFunc("/transaction", func(w http.ResponseWriter, r *http.Request) {
-		// create transaction
-		// if r.Method == http.MethodPost {
-
-		// }
-		// if r.Method == http.MethodGet {
-
-		// }
+		// update transactions
+		if r.Method == http.MethodPost {
+			controller.Update(w, r)
+		}
+		// get transactions
+		if r.Method == http.MethodGet {
+			controller.Get(w, r)
+		}
 	})
 
-	// configure server
+	// server configuration
 	server := http.Server{
 		IdleTimeout:  time.Duration(config.SERVER_IDLE_TIMEOUT) * time.Second,
 		ReadTimeout:  time.Duration(config.SERVER_READ_TIMEOUT) * time.Second,
@@ -71,23 +73,10 @@ func main() {
 		Handler:      mux,
 	}
 
-	// run server
-	go func() {
-		log.Printf("Server is listening to port %v", config.SERVER_PORT)
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	// listen to topics
+	go broker.Subscribe(client, []string{"create_transaction", "update_transaction"})
 
-	// gracefull shutdown
-	signChan := make(chan os.Signal)
-	signChan <- os.Kill
-	signChan <- os.Interrupt
-	ctx, er := context.WithTimeout(context.Background(), 20*time.Second)
-	if er != nil {
-		log.Fatal(er)
-	}
-	server.Shutdown(ctx)
+	// listen to http requests
+	log.Fatal(server.ListenAndServe())
 
 }
