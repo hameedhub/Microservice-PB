@@ -10,6 +10,10 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
+var (
+	AccountDeposit = "account_deposit"
+)
+
 type KafkaClient struct {
 	Server string
 	Group  string

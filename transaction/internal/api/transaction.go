@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"transaction/internal/broker"
 	"transaction/internal/domain"
 )
@@ -22,8 +24,9 @@ func NewTransaction(repo domain.TransactionRepository, kafkaClient *broker.Kafka
 }
 
 func (trans transactionApi) Get(w http.ResponseWriter, r *http.Request) {
+	account, _ := strconv.Atoi(strings.Split(r.URL.Path, "/")[2])
 	t := &[]domain.Transaction{}
-	trans.repo.GetTransaction(1, t)
+	trans.repo.GetTransaction(int64(account), t)
 	transactions, _ := json.Marshal(t)
 
 	w.Write([]byte(transactions))

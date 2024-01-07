@@ -5,6 +5,10 @@ import (
 	"account/internal/domain"
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"golang.org/x/exp/rand"
 )
 
 type accountApi struct {
@@ -14,6 +18,7 @@ type accountApi struct {
 
 type AccountApi interface {
 	Create(w http.ResponseWriter, r *http.Request)
+	Counter(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTransfer(repo domain.AccountRepository, kafkaClient *broker.KafkaClient) *accountApi {
@@ -21,13 +26,32 @@ func NewTransfer(repo domain.AccountRepository, kafkaClient *broker.KafkaClient)
 }
 
 func (account accountApi) Create(w http.ResponseWriter, r *http.Request) {
-	t := &domain.Account{}
-	account.repo.Create(int64(t.Account))
-	transactions, _ := json.Marshal(t)
 
-	w.Write([]byte(transactions))
+	t := domain.Account{}
+	_ = json.NewDecoder(r.Body).Decode(&t)
+	t.Status = domain.Active
+	t.Account = int64(rand.Int())
+	account.repo.Create(t)
+	trans, _ := json.Marshal(t)
+
+	w.Write([]byte(trans))
 }
 
-func (account accountApi) Deposit(w http.ResponseWriter, r *http.Request) {
+func (account accountApi) Counter(w http.ResponseWriter, r *http.Request) {
+	d := domain.Deposit{}
+	_ = json.NewDecoder(r.Body).Decode(&d)
+	account.repo.Update(d.Account, d.Amount, d.Type)
+	dp, _ := json.Marshal(d)
+	broker.Publish(account.kafkaClient, domain.AccountDeposit, string(dp))
+
+	w.Write([]byte(dp))
+}
+
+func (account accountApi) Get(w http.ResponseWriter, r *http.Request) {
+	accountNum, _ := strconv.Atoi(strings.Split(r.URL.Path, "/")[2])
+	ac := &domain.Account{}
+	account.repo.Get(int64(accountNum), ac)
+	accJson, _ := json.Marshal(ac)
+	w.Write([]byte(accJson))
 
 }

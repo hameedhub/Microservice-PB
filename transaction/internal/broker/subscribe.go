@@ -1,15 +1,18 @@
 package broker
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"transaction/internal/domain"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func Subscribe(client *KafkaClient, topics []string) error {
+func Subscribe(client *KafkaClient, repo domain.TransactionRepository, topics []string) error {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -33,11 +36,11 @@ func Subscribe(client *KafkaClient, topics []string) error {
 		fmt.Println("Termination signal. Closing consumer")
 		c.Close()
 	}()
-	consume(c)
+	consume(c, repo)
 	return nil
 }
 
-func consume(consumer *kafka.Consumer) {
+func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
 	run := true
 	for run {
 		ev := consumer.Poll(100)
@@ -47,15 +50,18 @@ func consume(consumer *kafka.Consumer) {
 
 		switch e := ev.(type) {
 		case *kafka.Message:
-
-			fmt.Printf("Received message on topic %s [%d] at offset %d: %s\n",
-				*e.TopicPartition.Topic, e.TopicPartition.Partition, e.TopicPartition.Offset, string(e.Value))
-
+			if *e.TopicPartition.Topic == AccountDeposit {
+				ac := domain.Transaction{}
+				r := strings.NewReader(string(e.Value))
+				_ = json.NewDecoder(r).Decode(&ac)
+				ac.Status = domain.Success
+				repo.CreateTransaction(ac)
+			}
 		case kafka.Error:
 			fmt.Printf("Error: %v\n", e)
 			run = false // Terminate on error (change as per requirement)
 		default:
-			fmt.Printf("Ignored event: %v\n", e)
+			// fmt.Printf("Ignored event: %v\n", e)
 		}
 	}
 }

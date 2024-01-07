@@ -10,12 +10,17 @@ type transactionRepository struct {
 
 // Transaction repo
 type TransactionRepository interface {
+	CreateTransaction(Trans Transaction)
 	UpdateTransaction(Account int64, Status string, Transaction *Transaction)
 	GetTransaction(Account int64, Transactions *[]Transaction)
 }
 
 func NewRepo(db *gorm.DB) *transactionRepository {
 	return &transactionRepository{db: db}
+}
+
+func (repo *transactionRepository) CreateTransaction(Trans Transaction) {
+	repo.db.Model(&Transaction{}).Create(&Trans)
 }
 
 // UpdateTransaction implements TransactionRepository.

@@ -53,7 +53,7 @@ func main() {
 
 	// http REF: https://pkg.go.dev/net/http
 	mux := http.NewServeMux()
-	mux.HandleFunc("/transaction", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/transaction/", func(w http.ResponseWriter, r *http.Request) {
 		// update transactions
 		if r.Method == http.MethodPost {
 			controller.Update(w, r)
@@ -74,7 +74,7 @@ func main() {
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, []string{"create_transaction", "update_transaction"})
+	go broker.Subscribe(client, repo, []string{broker.AccountDeposit, "update_transaction"})
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())

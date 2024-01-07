@@ -32,8 +32,8 @@ func main() {
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: "create_account", NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: "account_deposit", NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: domain.CreateAccount, NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: domain.AccountDeposit, NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
 	}
 
 	// create client
@@ -54,13 +54,15 @@ func main() {
 
 	// http REF: https://pkg.go.dev/net/http
 	mux := http.NewServeMux()
-	mux.HandleFunc("/account", func(w http.ResponseWriter, r *http.Request) {
-		// update transfer
+	mux.HandleFunc("/account/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			controller.Create(w, r)
 		}
 		if r.Method == http.MethodPatch {
-			controller.Deposit(w, r)
+			controller.Counter(w, r)
+		}
+		if r.Method == http.MethodGet {
+			controller.Get(w, r)
 		}
 	})
 
