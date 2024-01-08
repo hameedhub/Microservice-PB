@@ -11,7 +11,7 @@ type transactionRepository struct {
 // Transaction repo
 type TransactionRepository interface {
 	CreateTransaction(Trans Transaction)
-	UpdateTransaction(Account int64, Status string, Transaction *Transaction)
+	UpdateTransaction(Ref int64, Status string)
 	GetTransaction(Account int64, Transactions *[]Transaction)
 }
 
@@ -24,11 +24,11 @@ func (repo *transactionRepository) CreateTransaction(Trans Transaction) {
 }
 
 // UpdateTransaction implements TransactionRepository.
-func (repo *transactionRepository) UpdateTransaction(Account int64, Status string, Tran *Transaction) {
-	repo.db.Model(&Transaction{}).Where("account = ?", Account).Update("status", Status).Find(Tran)
+func (repo *transactionRepository) UpdateTransaction(Ref int64, Status string) {
+	repo.db.Model(&Transaction{}).Where("ref = ?", Ref).Update("status", Status)
 }
 
 // GetTransaction implements TransactionRepository.
 func (repo *transactionRepository) GetTransaction(Account int64, Trans *[]Transaction) {
-	repo.db.Where("account = ?", Account).Limit(50).Find(Trans)
+	repo.db.Where("account = ?", Account).Find(Trans).Order("id DESC")
 }

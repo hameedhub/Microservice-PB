@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"transfer/internal/broker"
 	"transfer/internal/domain"
@@ -22,8 +23,12 @@ func NewTransfer(repo domain.TransferRepository, kafkaClient *broker.KafkaClient
 
 func (trans transferApi) Create(w http.ResponseWriter, r *http.Request) {
 	t := &domain.Transfer{}
-	trans.repo.Create(int64(t.Amount))
+	json.NewDecoder(r.Body).Decode(t)
+	t.Status = domain.Pending
+	t.Ref = int64(rand.Int63n(99999))
+	trans.repo.Create(t)
 	transactions, _ := json.Marshal(t)
+	broker.Publish(trans.kafkaClient, broker.CreateTransfer, string(transactions))
 
 	w.Write([]byte(transactions))
 }

@@ -10,6 +10,14 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
+// Domain producer
+var (
+	CreateAccount  = "create_account"
+	AccountDeposit = "account_deposit"
+	CreateTransfer = "create_transfer"
+	TransferStatus = "transfer_status"
+)
+
 type KafkaClient struct {
 	Server string
 	Group  string

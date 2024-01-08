@@ -32,7 +32,8 @@ func main() {
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: "create_transfer", NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.CreateTransfer, NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.TransferStatus, NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
 	}
 
 	// create client

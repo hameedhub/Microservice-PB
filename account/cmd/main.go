@@ -32,8 +32,8 @@ func main() {
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: domain.CreateAccount, NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: domain.AccountDeposit, NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.CreateAccount, NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.AccountDeposit, NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
 	}
 
 	// create client
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, []string{"update_transaction"})
+	go broker.Subscribe(client, repo, []string{broker.CreateTransfer})
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())

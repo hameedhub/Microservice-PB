@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -10,7 +12,7 @@ type transferRepository struct {
 
 // Transfer repo
 type TransferRepository interface {
-	Create(Amount int64)
+	Create(Trans *Transfer)
 	Update(ID int64, Status string)
 }
 
@@ -19,11 +21,14 @@ func NewRepo(db *gorm.DB) *transferRepository {
 }
 
 // Create Transfer implements TransferRepository.
-func (repo *transferRepository) Create(Amount int64) {
-	// repo.db.Model(&Transfer{}).Create(&Trans)
+func (repo *transferRepository) Create(Trans *Transfer) {
+	repo.db.Model(&Transfer{}).Create(&Trans)
 }
 
 // Update implements TransferRepository.
-func (repo *transferRepository) Update(ID int64, Status string) {
-	repo.db.Where("id = ?", ID).Update("Status", Status)
+func (repo *transferRepository) Update(Ref int64, Status string) {
+	err := repo.db.Where("ref = ?", Ref).Update("status", Status).Error
+	if err != nil {
+		fmt.Println(err)
+	}
 }

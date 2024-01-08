@@ -57,6 +57,38 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
 				ac.Status = domain.Success
 				repo.CreateTransaction(ac)
 			}
+			if *e.TopicPartition.Topic == CreateTransfer {
+				tf := domain.Transfer{}
+				r := strings.NewReader(string(e.Value))
+				json.NewDecoder(r).Decode(&tf)
+				// credit account
+				ac := domain.Transaction{
+					Amount:  tf.Amount,
+					Account: tf.CreditAccount,
+					Type:    domain.Credit,
+					Ref:     tf.Ref,
+					Status:  domain.Pending,
+				}
+				repo.CreateTransaction(ac)
+				// debit account
+				ad := domain.Transaction{
+					Amount:  tf.Amount,
+					Account: tf.DebitAccount,
+					Type:    domain.Debit,
+					Ref:     tf.Ref,
+					Status:  domain.Pending,
+				}
+				repo.CreateTransaction(ad)
+			}
+			fmt.Println(*e.TopicPartition.Topic)
+			if *e.TopicPartition.Topic == TransferStatus {
+				fmt.Println(string(e.Value))
+				tf := domain.Transfer{}
+				r := strings.NewReader(string(e.Value))
+				json.NewDecoder(r).Decode(&tf)
+				repo.UpdateTransaction(tf.Ref, tf.Status)
+			}
+
 		case kafka.Error:
 			fmt.Printf("Error: %v\n", e)
 			run = false // Terminate on error (change as per requirement)

@@ -21,5 +21,14 @@ type Transaction struct {
 	Amount  float64 `json:"amount"`
 	Account int64   `json:"account"`
 	Type    string  `json:"type"`
+	Ref     int64   `json:"ref"`
 	Status  string  `json:"status"`
+}
+
+type Transfer struct {
+	CreditAccount int64   `json:"credit_account"`
+	DebitAccount  int64   `json:"debit_account"`
+	Amount        float64 `json:"amount"`
+	Ref           int64   `json:"ref"`
+	Status        string  `json:"status"`
 }

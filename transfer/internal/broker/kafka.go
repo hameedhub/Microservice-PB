@@ -10,6 +10,11 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
+var (
+	CreateTransfer = "create_transfer"
+	TransferStatus = "transfer_status"
+)
+
 type KafkaClient struct {
 	Server string
 	Group  string

@@ -4,13 +4,11 @@ import (
 	"time"
 )
 
-// Domain producer
 var (
-	CreateAccount  = "create_account"
-	AccountDeposit = "account_deposit"
+	Success = "Successful"
+	Failed  = "Failed"
+	Pending = "Pending"
 )
-
-// Domain consumer
 
 // status
 var (
@@ -34,4 +32,12 @@ type Deposit struct {
 	Account int64   `json:"account"`
 	Amount  float64 `json:"amount"`
 	Type    string  `json:"type"`
+}
+
+type Transfer struct {
+	CreditAccount int64   `json:"credit_account"`
+	DebitAccount  int64   `json:"debit_account"`
+	Amount        float64 `json:"amount"`
+	Ref           int64   `json:"ref"`
+	Status        string  `json:"status"`
 }

@@ -16,7 +16,6 @@ type transactionApi struct {
 
 type TransactionApi interface {
 	Get(w http.ResponseWriter, r *http.Request)
-	Update(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTransaction(repo domain.TransactionRepository, kafkaClient *broker.KafkaClient) *transactionApi {
@@ -30,10 +29,4 @@ func (trans transactionApi) Get(w http.ResponseWriter, r *http.Request) {
 	transactions, _ := json.Marshal(t)
 
 	w.Write([]byte(transactions))
-}
-func (trans transactionApi) Update(w http.ResponseWriter, r *http.Request) {
-	t := &domain.Transaction{}
-	trans.repo.UpdateTransaction(1, domain.Success, t)
-	transaction, _ := json.Marshal(t)
-	broker.Publish(trans.kafkaClient, "update_transaction", string(transaction))
 }

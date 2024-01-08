@@ -30,7 +30,7 @@ func (account accountApi) Create(w http.ResponseWriter, r *http.Request) {
 	t := domain.Account{}
 	_ = json.NewDecoder(r.Body).Decode(&t)
 	t.Status = domain.Active
-	t.Account = int64(rand.Int())
+	t.Account = int64(rand.Int63n(99999999))
 	account.repo.Create(t)
 	trans, _ := json.Marshal(t)
 
@@ -42,7 +42,7 @@ func (account accountApi) Counter(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&d)
 	account.repo.Update(d.Account, d.Amount, d.Type)
 	dp, _ := json.Marshal(d)
-	broker.Publish(account.kafkaClient, domain.AccountDeposit, string(dp))
+	broker.Publish(account.kafkaClient, broker.AccountDeposit, string(dp))
 
 	w.Write([]byte(dp))
 }

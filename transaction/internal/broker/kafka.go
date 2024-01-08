@@ -12,6 +12,8 @@ import (
 
 var (
 	AccountDeposit = "account_deposit"
+	CreateTransfer = "create_transfer"
+	TransferStatus = "transfer_status"
 )
 
 type KafkaClient struct {
