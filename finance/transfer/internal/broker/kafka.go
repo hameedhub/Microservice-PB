@@ -24,6 +24,7 @@ type Topic struct {
 	Topic             string
 	NumPartitions     int
 	ReplicationFactor int
+	Priority          string
 }
 
 func NewKafkaClient(server, group string, topics []Topic) (*KafkaClient, error) {

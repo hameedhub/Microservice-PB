@@ -15,10 +15,13 @@ import (
 
 func main() {
 	// Read configuration data ...
-	config, err := config.ReadConfig(".")
+	c, err := config.ReadConfig(".")
 	if err != nil {
 		panic(err)
 	}
+
+	// new logger
+	l, err := config.NewLogger("logs")
 
 	//setup database ORM sqlite DB
 	// REF: https://gorm.io/docs/
@@ -32,12 +35,11 @@ func main() {
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: broker.CreateTransfer, NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: broker.TransferStatus, NumPartitions: int(config.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.CreateTransfer, NumPartitions: int(c.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1, Priority: "HIGH_PRIORITY_PARTITION"},
 	}
 
 	// create client
-	client, err := broker.NewKafkaClient(config.KAFKA_SERVER, config.KAFKA_CONSUMER_GROUP, topics)
+	client, err := broker.NewKafkaClient(c.KAFKA_SERVER, c.KAFKA_CONSUMER_GROUP, topics)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,15 +65,15 @@ func main() {
 
 	// server configuration
 	server := http.Server{
-		IdleTimeout:  time.Duration(config.SERVER_IDLE_TIMEOUT) * time.Second,
-		ReadTimeout:  time.Duration(config.SERVER_READ_TIMEOUT) * time.Second,
-		WriteTimeout: time.Duration(config.SERVER_WRITE_TIMEOUT) * time.Second,
-		Addr:         config.SERVER_PORT,
+		IdleTimeout:  time.Duration(c.SERVER_IDLE_TIMEOUT) * time.Second,
+		ReadTimeout:  time.Duration(c.SERVER_READ_TIMEOUT) * time.Second,
+		WriteTimeout: time.Duration(c.SERVER_WRITE_TIMEOUT) * time.Second,
+		Addr:         c.SERVER_PORT,
 		Handler:      mux,
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, []string{"update_transaction"})
+	go broker.Subscribe(client, []string{"update_transaction"}, l)
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())

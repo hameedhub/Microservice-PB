@@ -5,11 +5,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"transfer/internal/config"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func Subscribe(client *KafkaClient, topics []string) error {
+func Subscribe(client *KafkaClient, topics []string, logger config.Logger) error {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -33,11 +34,11 @@ func Subscribe(client *KafkaClient, topics []string) error {
 		fmt.Println("Termination signal. Closing consumer")
 		c.Close()
 	}()
-	consume(c)
+	consume(c, logger)
 	return nil
 }
 
-func consume(consumer *kafka.Consumer) {
+func consume(consumer *kafka.Consumer, logger config.Logger) {
 	run := true
 	for run {
 		ev := consumer.Poll(100)

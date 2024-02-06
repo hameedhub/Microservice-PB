@@ -7,12 +7,14 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
+	"transaction/internal/config"
 	"transaction/internal/domain"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func Subscribe(client *KafkaClient, repo domain.TransactionRepository, topics []string) error {
+func Subscribe(client *KafkaClient, repo domain.TransactionRepository, topics []string, logger config.Logger) error {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -36,14 +38,14 @@ func Subscribe(client *KafkaClient, repo domain.TransactionRepository, topics []
 		fmt.Println("Termination signal. Closing consumer")
 		c.Close()
 	}()
-	consume(c, repo)
+	consume(c, repo, logger)
 	return nil
 }
 
-func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
+func consume(consumer *kafka.Consumer, repo domain.TransactionRepository, logger config.Logger) {
 	run := true
 	for run {
-		ev := consumer.Poll(100)
+		ev := consumer.Poll(1000)
 		if ev == nil {
 			continue
 		}
@@ -54,6 +56,13 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
 				ac := domain.Transaction{}
 				r := strings.NewReader(string(e.Value))
 				_ = json.NewDecoder(r).Decode(&ac)
+				logger.Log(config.Log{
+					Topic:        *e.TopicPartition.Topic,
+					Priority:     string(e.Key),
+					Service:      "account",
+					SentTime:     e.Timestamp,
+					ReceivedTime: time.Now(),
+				})
 				ac.Status = domain.Success
 				repo.CreateTransaction(ac)
 			}
@@ -61,6 +70,14 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
 				tf := domain.Transfer{}
 				r := strings.NewReader(string(e.Value))
 				json.NewDecoder(r).Decode(&tf)
+
+				logger.Log(config.Log{
+					Topic:        *e.TopicPartition.Topic,
+					Priority:     string(e.Key),
+					Service:      "transfer",
+					SentTime:     e.Timestamp,
+					ReceivedTime: time.Now(),
+				})
 				// credit account
 				ac := domain.Transaction{
 					Amount:  tf.Amount,
@@ -82,10 +99,17 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository) {
 			}
 			fmt.Println(*e.TopicPartition.Topic)
 			if *e.TopicPartition.Topic == TransferStatus {
-				fmt.Println(string(e.Value))
 				tf := domain.Transfer{}
 				r := strings.NewReader(string(e.Value))
 				json.NewDecoder(r).Decode(&tf)
+				logger.Log(config.Log{
+					Topic:        *e.TopicPartition.Topic,
+					Priority:     string(e.Key),
+					Service:      "account",
+					SentTime:     e.Timestamp,
+					ReceivedTime: time.Now(),
+				})
+
 				repo.UpdateTransaction(tf.Ref, tf.Status)
 			}
 

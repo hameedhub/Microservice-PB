@@ -15,11 +15,13 @@ import (
 
 func main() {
 	// Read configuration data ...
-	config, err := config.ReadConfig(".")
+	c, err := config.ReadConfig(".")
 	if err != nil {
 		panic(err)
 	}
 
+	// new logger
+	l, err := config.NewLogger("logs")
 	//setup database ORM sqlite DB
 	// REF: https://gorm.io/docs/
 	db, err := gorm.Open(sqlite.Open("accounts.db"), &gorm.Config{})
@@ -32,23 +34,24 @@ func main() {
 
 	// topics  REF: https://kafka.apache.org/documentation/#topicconfigs
 	topics := []broker.Topic{
-		{Topic: broker.CreateAccount, NumPartitions: int(config.LOW_PRIORITY_PARTITION), ReplicationFactor: 1},
-		{Topic: broker.AccountDeposit, NumPartitions: int(config.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1},
+		{Topic: broker.CreateAccount, NumPartitions: int(c.LOW_PRIORITY_PARTITION), ReplicationFactor: 1, Priority: "LOW_PRIORITY_PARTITION"},
+		{Topic: broker.AccountDeposit, NumPartitions: int(c.MEDIUM_PRIORITY_PARTITION), ReplicationFactor: 1, Priority: "MEDIUM_PRIORITY_PARTITION"},
+		{Topic: broker.TransferStatus, NumPartitions: int(c.HIGH_PRIORITY_PARTITION), ReplicationFactor: 1, Priority: "HIGH_PRIORITY_PARTITION"},
 	}
 
 	// create client
-	client, err := broker.NewKafkaClient(config.KAFKA_SERVER, config.KAFKA_CONSUMER_GROUP, topics)
+	client, err := broker.NewKafkaClient(c.KAFKA_SERVER, c.KAFKA_CONSUMER_GROUP, topics)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// // create topics
+	// create topics
 	err = broker.NewKafkaAdminClientCreateTopic(client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// // setting up repo for the controller to access db
+	// setting up repo for the controller to access db
 	repo := domain.NewRepo(db)
 	controller := api.NewTransfer(repo, client)
 
@@ -68,15 +71,15 @@ func main() {
 
 	// server configuration
 	server := http.Server{
-		IdleTimeout:  time.Duration(config.SERVER_IDLE_TIMEOUT) * time.Second,
-		ReadTimeout:  time.Duration(config.SERVER_READ_TIMEOUT) * time.Second,
-		WriteTimeout: time.Duration(config.SERVER_WRITE_TIMEOUT) * time.Second,
-		Addr:         config.SERVER_PORT,
+		IdleTimeout:  time.Duration(c.SERVER_IDLE_TIMEOUT) * time.Second,
+		ReadTimeout:  time.Duration(c.SERVER_READ_TIMEOUT) * time.Second,
+		WriteTimeout: time.Duration(c.SERVER_WRITE_TIMEOUT) * time.Second,
+		Addr:         c.SERVER_PORT,
 		Handler:      mux,
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, repo, []string{broker.CreateTransfer})
+	go broker.Subscribe(client, repo, []string{broker.CreateTransfer}, l)
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())
