@@ -1,27 +1,35 @@
 package main
 
 import (
+	"consumer/csvlog"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func consumeMessages(consumer *kafka.Consumer) {
+func consumeMessages(consumer *kafka.Consumer, logger csvlog.Logger) {
 	run := true
 	for run {
-		ev := consumer.Poll(100)
+		ev := consumer.Poll(500)
 		if ev == nil {
 			continue
 		}
 
 		switch e := ev.(type) {
 		case *kafka.Message:
-
-			fmt.Printf("Received message on topic %s [%d] at offset %d: %s\n",
-				*e.TopicPartition.Topic, e.TopicPartition.Partition, e.TopicPartition.Offset, string(e.Value))
+			logger.Log(csvlog.Log{
+				Priority:     *e.TopicPartition.Topic,
+				Partition:    e.TopicPartition.Partition,
+				SentTime:     e.Timestamp,
+				ReceivedTime: time.Now(),
+				PayloadSize:  len(string(e.Value)),
+			})
+			//fmt.Printf("Received message on topic %s [%d] at offset %d: %s\n",
+			//	*e.TopicPartition.Topic, e.TopicPartition.Partition, e.TopicPartition.Offset, string(e.Value))
 
 		case kafka.Error:
 			fmt.Printf("Error: %v\n", e)
@@ -33,6 +41,12 @@ func consumeMessages(consumer *kafka.Consumer) {
 }
 
 func main() {
+
+	logger, err := csvlog.NewLogger("logs")
+	if err != nil {
+		fmt.Println("Error from logger")
+	}
+
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -41,6 +55,7 @@ func main() {
 		"group.id":          "myGroup",
 		"auto.offset.reset": "earliest",
 	})
+
 	if err != nil {
 		fmt.Printf("Error creating consumer: %v\n", err)
 		return
@@ -48,7 +63,6 @@ func main() {
 	defer c.Close()
 
 	topics := []string{"high", "medium", "low"}
-
 	err = c.SubscribeTopics(topics, nil)
 	if err != nil {
 		fmt.Printf("Error subscribing to topics: %v\n", err)
@@ -61,5 +75,5 @@ func main() {
 		c.Close() // Close consumer on signal
 	}()
 
-	consumeMessages(c)
+	consumeMessages(c, logger)
 }

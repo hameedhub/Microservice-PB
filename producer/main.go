@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -24,7 +25,7 @@ func main() {
 			NumPartitions:     10,
 			ReplicationFactor: 1},
 			{Topic: "medium",
-				NumPartitions:     5,
+				NumPartitions:     4,
 				ReplicationFactor: 1},
 			{Topic: "low",
 				NumPartitions:     2,
@@ -46,22 +47,29 @@ func main() {
 	}
 	defer p.Close()
 
-	produce(p, "low")
-	produce(p, "medium")
-	produce(p, "high")
-	produce(p, "medium")
-	produce(p, "high")
-	produce(p, "high")
+	payload := "{\n    \"credit_account\": 38371524,\n    \"debit_account\": 36581830,\n    \"amount\":200\n}"
+
+	priorityLevels := []string{"high", "medium", "low"}
+	for i := 0; i < 90; i++ {
+		priority := priorityLevels[i%len(priorityLevels)]
+		fmt.Printf("%s - %d\n", priority, i)
+		produce(p, priority, payload)
+	}
+
+	fmt.Println("Done............")
+
 	p.Flush(100)
 }
 
-func produce(p *kafka.Producer, topic string) {
+func produce(p *kafka.Producer, topic string, data string) {
 
 	deliveryChan := make(chan kafka.Event)
 
 	err := p.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          []byte("Hello " + topic),
+		Key:            []byte(topic),
+		Value:          []byte(data),
+		Timestamp:      time.Now(),
 	}, deliveryChan)
 
 	if err != nil {
