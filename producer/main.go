@@ -29,7 +29,10 @@ func main() {
 				ReplicationFactor: 1},
 			{Topic: "low",
 				NumPartitions:     2,
-				ReplicationFactor: 1}},
+				ReplicationFactor: 1},
+			{Topic: "default",
+				ReplicationFactor: 1},
+		},
 		// Admin options
 		kafka.SetAdminOperationTimeout(100))
 
@@ -49,8 +52,8 @@ func main() {
 
 	payload := "{\n    \"credit_account\": 38371524,\n    \"debit_account\": 36581830,\n    \"amount\":200\n}"
 
-	priorityLevels := []string{"high", "medium", "low"}
-	for i := 0; i < 90; i++ {
+	priorityLevels := []string{"high", "medium", "low", "default"}
+	for i := 0; i < 120; i++ {
 		priority := priorityLevels[i%len(priorityLevels)]
 		fmt.Printf("%s - %d\n", priority, i)
 		produce(p, priority, payload)

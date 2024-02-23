@@ -62,7 +62,7 @@ func main() {
 	}
 	defer c.Close()
 
-	topics := []string{"high", "medium", "low"}
+	topics := []string{"high", "medium", "low", "default"}
 	err = c.SubscribeTopics(topics, nil)
 	if err != nil {
 		fmt.Printf("Error subscribing to topics: %v\n", err)
