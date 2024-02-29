@@ -31,6 +31,9 @@ func main() {
 				NumPartitions:     2,
 				ReplicationFactor: 1},
 			{Topic: "default",
+				//https://kafka.apache.org/081/documentation.html#topic-config
+				// Requires even number else it defaulted to zero
+				NumPartitions:     2,
 				ReplicationFactor: 1},
 		},
 		// Admin options
