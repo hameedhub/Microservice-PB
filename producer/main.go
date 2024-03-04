@@ -33,7 +33,7 @@ func main() {
 			{Topic: "default",
 				//https://kafka.apache.org/081/documentation.html#topic-config
 				// Requires even number else it defaulted to zero
-				NumPartitions:     2,
+				NumPartitions:     16,
 				ReplicationFactor: 1},
 		},
 		// Admin options
@@ -55,7 +55,7 @@ func main() {
 
 	payload := "{\n    \"credit_account\": 38371524,\n    \"debit_account\": 36581830,\n    \"amount\":200\n}"
 
-	priorityLevels := []string{"high", "medium", "low", "default"}
+	priorityLevels := []string{"default", "high", "medium", "low"}
 	for i := 0; i < 120; i++ {
 		priority := priorityLevels[i%len(priorityLevels)]
 		fmt.Printf("%s - %d\n", priority, i)
