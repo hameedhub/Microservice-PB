@@ -1,4 +1,4 @@
-module producer
+module default
 
 go 1.21.5
 
