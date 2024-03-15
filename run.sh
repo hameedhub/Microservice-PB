@@ -1,6 +1,7 @@
 #!/bin/zsh
 
 directories=("default" "high" "medium" "low" )
+run() {
 for dir in "${directories[@]}"; do
     if [ -d "$dir" ]; then
         cd "$dir"
@@ -16,3 +17,9 @@ for dir in "${directories[@]}"; do
 done
 
 wait
+}
+
+for i in {1..100} ; do
+    run "$i"
+    sleep 20
+done

@@ -47,7 +47,7 @@ func main() {
 	payload := "{\n    \"credit_account\": 38371524,\n    \"debit_account\": 36581830,\n    \"amount\":200\n}"
 
 	priorityLevels := []string{"default"}
-	for i := 0; i < 15; i++ {
+	for i := 0; i < 30; i++ {
 		priority := priorityLevels[i%len(priorityLevels)]
 		fmt.Printf("%s - %d\n", priority, i)
 		produce(p, priority, payload)
