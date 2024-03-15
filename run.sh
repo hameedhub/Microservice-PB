@@ -19,7 +19,9 @@ done
 wait
 }
 
-for i in {1..100} ; do
+for i in {1..10} ; do
     run "$i"
-    sleep 20
+    sleep 5
 done
+
+echo "Done all request"
