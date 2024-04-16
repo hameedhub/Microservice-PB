@@ -14,6 +14,7 @@ var (
 	AccountDeposit = "account_deposit"
 	CreateTransfer = "create_transfer"
 	TransferStatus = "transfer_status"
+	CreateAccount  = "create_account"
 )
 
 type KafkaClient struct {

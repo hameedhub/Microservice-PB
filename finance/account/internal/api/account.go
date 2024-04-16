@@ -33,6 +33,7 @@ func (account accountApi) Create(w http.ResponseWriter, r *http.Request) {
 	t.Account = int64(rand.Int63n(99999999))
 	account.repo.Create(t)
 	trans, _ := json.Marshal(t)
+	broker.Publish(account.kafkaClient, broker.CreateAccount, string(trans))
 
 	w.Write([]byte(trans))
 }

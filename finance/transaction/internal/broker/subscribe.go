@@ -62,6 +62,7 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository, logger
 					Service:      "account",
 					SentTime:     e.Timestamp,
 					ReceivedTime: time.Now(),
+					PayloadSize:  len(string(e.Value)),
 				})
 				ac.Status = domain.Success
 				repo.CreateTransaction(ac)
@@ -77,6 +78,7 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository, logger
 					Service:      "transfer",
 					SentTime:     e.Timestamp,
 					ReceivedTime: time.Now(),
+					PayloadSize:  len(string(e.Value)),
 				})
 				// credit account
 				ac := domain.Transaction{
@@ -108,9 +110,20 @@ func consume(consumer *kafka.Consumer, repo domain.TransactionRepository, logger
 					Service:      "account",
 					SentTime:     e.Timestamp,
 					ReceivedTime: time.Now(),
+					PayloadSize:  len(string(e.Value)),
 				})
 
 				repo.UpdateTransaction(tf.Ref, tf.Status)
+			}
+			if *e.TopicPartition.Topic == CreateAccount {
+				logger.Log(config.Log{
+					Topic:        *e.TopicPartition.Topic,
+					Priority:     string(e.Key),
+					Service:      "account",
+					SentTime:     e.Timestamp,
+					ReceivedTime: time.Now(),
+					PayloadSize:  len(string(e.Value)),
+				})
 			}
 
 		case kafka.Error:

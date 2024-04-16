@@ -63,6 +63,7 @@ func consume(consumer *kafka.Consumer, client *KafkaClient, repo domain.AccountR
 					Service:      "account",
 					SentTime:     tf.UpdatedAt,
 					ReceivedTime: time.Now(),
+					PayloadSize:  len(string(e.Value)),
 				})
 
 				// if account exist
@@ -70,15 +71,15 @@ func consume(consumer *kafka.Consumer, client *KafkaClient, repo domain.AccountR
 				ad := &domain.Account{}
 				repo.Get(tf.CreditAccount, ac)
 				repo.Get(tf.DebitAccount, ad)
-				//if ac.Account == 0 || ad.Account == 0 {
-				tf.Status = domain.Failed
-				f, _ := json.Marshal(tf)
-				go Publish(client, TransferStatus, string(f))
-				//} else {
-				//	tf.Status = domain.Success
-				//	f, _ := json.Marshal(tf)
-				//	Publish(client, TransferStatus, string(f))
-				//}
+				if ac.Account == 0 || ad.Account == 0 {
+					tf.Status = domain.Failed
+					f, _ := json.Marshal(tf)
+					go Publish(client, TransferStatus, string(f))
+				} else {
+					tf.Status = domain.Success
+					f, _ := json.Marshal(tf)
+					Publish(client, TransferStatus, string(f))
+				}
 
 			}
 

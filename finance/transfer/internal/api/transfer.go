@@ -28,6 +28,7 @@ func (trans transferApi) Create(w http.ResponseWriter, r *http.Request) {
 	t.Ref = int64(rand.Int63n(99999))
 	trans.repo.Create(t)
 	transactions, _ := json.Marshal(t)
+	print(string(transactions))
 	broker.Publish(trans.kafkaClient, broker.CreateTransfer, string(transactions))
 
 	w.Write([]byte(transactions))

@@ -72,7 +72,7 @@ func main() {
 	}
 
 	// listen to topics
-	go broker.Subscribe(client, repo, []string{broker.AccountDeposit, broker.CreateTransfer, broker.TransferStatus}, l)
+	go broker.Subscribe(client, repo, []string{broker.AccountDeposit, broker.CreateTransfer, broker.TransferStatus, broker.CreateAccount}, l)
 
 	// listen to http requests
 	log.Fatal(server.ListenAndServe())

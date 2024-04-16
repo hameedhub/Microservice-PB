@@ -19,6 +19,7 @@ type Log struct {
 	SentTime     time.Time
 	ReceivedTime time.Time
 	TimeSpent    int64
+	PayloadSize  int
 }
 
 type logger struct {
