@@ -15,7 +15,10 @@ This sample code is submitted in partial fulfilment of the requirement by ENU fo
 
 ## Starting the project
 - run command `go tidy`  (This will install all the necessary packages)
-- cd into the the main.go file and run `go run main.go` and see the terminal for any notification
+- create and start the docker container using the following commands on the docker file directory `docker-compose up` and `docker-compose down` to stop the container
+- cd into the the main.go file and run `go run main.go` for `ft-test` and see the terminal for any notification
+  
+- For `mult-producer-test`  run `sh run.sh` to run the producers and `sh run_consmer.sh` to start the consumer.
 
 ## Navigating on the repo
 At the time of this Readme, we have about 6 branches of test case on this hypothesis, for this submission we would only be reviewing **2 branches** as follows;
